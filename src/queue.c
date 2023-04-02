@@ -16,20 +16,13 @@ struct pcb_t * dequeue(struct queue_t * q) {
 	/* TODO: return a pcb whose prioprity is the highest
 	 * in the queue [q] and remember to remove it from q
 	 * */
-	uint32_t min_prio = INT_MAX;
+	uint32_t min_prio = UINT32_MAX;
 	int index = -1;
 	if (!empty(q)) {
 		for (int i = 0; i < q->size; i++) {
-			if (q->proc[i]->prio) {
-				if (q->proc[i]->prio < min_prio) {
-					min_prio = q->proc[i]->prio;
-					index = i;
-				}
-			} else {
-				if (q->proc[i]->priority < min_prio) {
-					min_prio = q->proc[i]->priority;
-					index = i;
-				}
+			if (q->proc[i]->priority < min_prio) {
+				min_prio = q->proc[i]->priority;
+				index = i;
 			}
 		}
 		struct pcb_t *min_proc = q->proc[index];
