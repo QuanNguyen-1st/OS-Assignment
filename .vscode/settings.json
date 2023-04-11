@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "timer.h": "c"
+        "timer.h": "c",
+        "sched.h": "c",
+        "pthread.h": "c",
+        "queue.h": "c"
     }
 }
