@@ -75,7 +75,7 @@ static int translate(
 	addr_t second_lv = get_second_lv(virtual_addr);
 	
 	/* Search in the first level */
-	struct trans_table_t *trans_table = get_trans_table(first_lv, proc->seg_table);
+	struct trans_table_t *trans_table = get_trans_table(first_lv, proc->page_table);
     if (trans_table == NULL){
         return 0;
     }
@@ -145,14 +145,14 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
                 uint32_t seg_idx = get_first_lv(virtual_addr);
                 uint32_t page_table_idx = get_second_lv(virtual_addr);
 
-                struct trans_table_t *pages_next_lv = get_trans_table(seg_idx, proc->seg_table);
+                struct trans_table_t *pages_next_lv = get_trans_table(seg_idx, proc->page_table);
                 if (!pages_next_lv) {
-                    proc->seg_table->table[proc->seg_table->size].v_index = seg_idx;
+                    proc->page_table->table[proc->page_table->size].v_index = seg_idx;
                     pages_next_lv = (struct trans_table_t *)malloc(
                         sizeof(struct trans_table_t));
                     pages_next_lv->size = 0;
-                    proc->seg_table->table[proc->seg_table->size].next_lv = pages_next_lv;
-                    proc->seg_table->size++;
+                    proc->page_table->table[proc->page_table->size].next_lv = pages_next_lv;
+                    proc->page_table->size++;
                 }
 
                 pages_next_lv->table[pages_next_lv->size].v_index = page_table_idx;
@@ -196,7 +196,7 @@ int free_mem(addr_t address, struct pcb_t * proc) {
         _mem_stat[p_index].next = -1;
         uint32_t seg_idx = get_first_lv(virtual_addr);
         uint32_t page_table_idx = get_second_lv(virtual_addr);
-        struct trans_table_t *pages = get_trans_table(seg_idx, proc->seg_table);
+        struct trans_table_t *pages = get_trans_table(seg_idx, proc->page_table);
 
         int i = 0;
         while (pages->table[i].v_index != page_table_idx) {
@@ -210,12 +210,12 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 
         if (pages->size == 0) {
             int i = 0;
-            for (; i < proc->seg_table->size; ++i) {
-                if (proc->seg_table->table[i].v_index == seg_idx)
+            for (; i < proc->page_table->size; ++i) {
+                if (proc->page_table->table[i].v_index == seg_idx)
                     break;
             }
-            proc->seg_table->table[i] = proc->seg_table->table[proc->seg_table->size - 1];
-            proc->seg_table->size--;
+            proc->page_table->table[i] = proc->page_table->table[proc->page_table->size - 1];
+            proc->page_table->size--;
             free(pages);
         }
         virtual_addr += PAGE_SIZE;
