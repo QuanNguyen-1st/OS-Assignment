@@ -51,11 +51,12 @@ static struct trans_table_t * get_trans_table(
 	 * */
 
 	int i;
-	for (i = 0; i < page_table->size; i++) {
-		// Enter your code here
-	}
-	return NULL;
-
+    for (i = 0; i < page_table->size; i++) {
+        if (page_table->table[i].v_index == index) {
+            return page_table->table[i].next_lv;
+        }
+    }
+    return NULL;
 }
 
 /* Translate virtual address to physical address. If [virtual_addr] is valid,
@@ -74,11 +75,10 @@ static int translate(
 	addr_t second_lv = get_second_lv(virtual_addr);
 	
 	/* Search in the first level */
-	struct trans_table_t * trans_table = NULL;
-	trans_table = get_trans_table(first_lv, proc->page_table);
-	if (trans_table == NULL) {
-		return 0;
-	}
+	struct trans_table_t *trans_table = get_trans_table(first_lv, proc->seg_table);
+    if (trans_table == NULL){
+        return 0;
+    }
 
 	int i;
 	for (i = 0; i < trans_table->size; i++) {
@@ -87,8 +87,9 @@ static int translate(
 			 * to [p_index] field of trans_table->table[i] to 
 			 * produce the correct physical address and save it to
 			 * [*physical_addr]  */
-			*physical_addr = offset /* (TODo) + translated_based_address */;
-			return 1;
+			if (physical_addr)
+                *physical_addr = (trans_table->table[i].p_index << OFFSET_LEN) + offset;
+            return 1;
 		}
 	}
 	return 0;	
@@ -102,8 +103,7 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 	 * byte in the allocated memory region to [ret_mem].
 	 * */
 
-	uint32_t num_pages = (size % PAGE_SIZE) ? size / PAGE_SIZE :
-		size / PAGE_SIZE + 1; // Number of pages we will use
+	uint32_t num_pages = (size % PAGE_SIZE) ? size / PAGE_SIZE : size / PAGE_SIZE + 1; // Number of pages we will use
 	int mem_avail = 0; // We could allocate new memory region or not?
 
 	/* First we must check if the amount of free memory in
@@ -114,7 +114,13 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 	 * to know whether this page has been used by a process.
 	 * For virtual memory space, check bp (break pointer).
 	 * */
-	
+	uint32_t count_free_pages = 0; // Count for number of free pages
+    for (int i = 0; i < NUM_PAGES; ++i) {
+        if (_mem_stat[i].proc == 0) count_free_pages++;
+    }
+    if (count_free_pages >= num_pages) {
+        if (num_pages * PAGE_SIZE + proc->bp <= RAM_SIZE) mem_avail = 1;
+    }
 	if (mem_avail) {
 		/* We could allocate new memory region to the process */
 		ret_mem = proc->bp;
@@ -125,6 +131,39 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 		 * 	- Add entries to segment table page tables of [proc]
 		 * 	  to ensure accesses to allocated memory slot is
 		 * 	  valid. */
+		int i = 0;            
+        int idx_mem_stat = 0; 
+        int prev = 0;    
+        while (i < num_pages && idx_mem_stat < NUM_PAGES) {
+            if (_mem_stat[idx_mem_stat].proc == 0) {
+                _mem_stat[idx_mem_stat].proc = proc->pid;
+                _mem_stat[idx_mem_stat].index = i;
+                _mem_stat[idx_mem_stat].next = -1;
+                if (i > 0) _mem_stat[prev].next = idx_mem_stat;
+
+                uint32_t virtual_addr = ret_mem + i * PAGE_SIZE;
+                uint32_t seg_idx = get_first_lv(virtual_addr);
+                uint32_t page_table_idx = get_second_lv(virtual_addr);
+
+                struct trans_table_t *pages_next_lv = get_trans_table(seg_idx, proc->seg_table);
+                if (!pages_next_lv) {
+                    proc->seg_table->table[proc->seg_table->size].v_index = seg_idx;
+                    pages_next_lv = (struct trans_table_t *)malloc(
+                        sizeof(struct trans_table_t));
+                    pages_next_lv->size = 0;
+                    proc->seg_table->table[proc->seg_table->size].next_lv = pages_next_lv;
+                    proc->seg_table->size++;
+                }
+
+                pages_next_lv->table[pages_next_lv->size].v_index = page_table_idx;
+                pages_next_lv->table[pages_next_lv->size].p_index = idx_mem_stat;
+                pages_next_lv->size++;
+
+                prev = idx_mem_stat;
+                ++i;
+            }
+            ++idx_mem_stat;
+        }
 	}
 	pthread_mutex_unlock(&mem_lock);
 	return ret_mem;
@@ -139,6 +178,50 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 	 * 	  the process [proc].
 	 * 	- Remember to use lock to protect the memory from other
 	 * 	  processes.  */
+	pthread_mutex_lock(&mem_lock);
+
+    addr_t physical_addr;
+    if (translate(address, &physical_addr, proc) == 0) {
+        pthread_mutex_unlock(&mem_lock);
+        return 1;
+    }
+
+    addr_t p_index = physical_addr >> OFFSET_LEN;
+
+    addr_t virtual_addr = address;
+    while (p_index != -1) {
+        int temp = _mem_stat[p_index].next;
+        _mem_stat[p_index].proc = 0;
+        _mem_stat[p_index].index = -1;
+        _mem_stat[p_index].next = -1;
+        uint32_t seg_idx = get_first_lv(virtual_addr);
+        uint32_t page_table_idx = get_second_lv(virtual_addr);
+        struct trans_table_t *pages = get_trans_table(seg_idx, proc->seg_table);
+
+        int i = 0;
+        while (pages->table[i].v_index != page_table_idx) {
+            ++i;
+        }
+
+        pages->table[i].p_index = pages->table[pages->size - 1].p_index;
+        pages->table[i].v_index = pages->table[pages->size - 1].v_index;
+
+        pages->size--;
+
+        if (pages->size == 0) {
+            int i = 0;
+            for (; i < proc->seg_table->size; ++i) {
+                if (proc->seg_table->table[i].v_index == seg_idx)
+                    break;
+            }
+            proc->seg_table->table[i] = proc->seg_table->table[proc->seg_table->size - 1];
+            proc->seg_table->size--;
+            free(pages);
+        }
+        virtual_addr += PAGE_SIZE;
+        p_index = temp;
+    }
+	pthread_mutex_unlock(&mem_lock);
 	return 0;
 }
 
