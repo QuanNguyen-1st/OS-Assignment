@@ -99,9 +99,12 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      [addr to addr + pgnum*PAGING_PAGESZ
    *      in page table caller->mm->pgd[]
    */
-  for (int i = 0; i < pgnum*PAGING_PAGESZ; i++){
-    
+  while (fpit->fp_next){
+    caller->mm->pgd[addr + pgit] = fpit->fp_next->fpn;
+    pgit++;
+    fpit = fpit->fp_next;
   }
+  ret_rg->rg_end = addr + pgit;
    /* Tracking for later page replacement activities (if needed)
     * Enqueue new usage page */
    enlist_pgn_node(&caller->mm->fifo_pgn, pgn+pgit);
