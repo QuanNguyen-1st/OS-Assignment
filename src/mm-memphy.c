@@ -160,8 +160,16 @@ int MEMPHY_dump(struct memphy_struct * mp)
     /*TODO dump memphy contnt mp->storage 
      *     for tracing the memory content
      */
+   if (mp == NULL) return -1;
+   for (int i = 0; i < mp->maxsz; i++){
+      if (mp->rdmflg) printf(mp->storage[i]);
+      else {
+         MEMPHY_mv_csr(mp, i);
+         printf(mp->storage[i]);
+      }
+   }
 
-    return 0;
+   return 0;
 }
 
 int MEMPHY_put_freefp(struct memphy_struct *mp, int fpn)
