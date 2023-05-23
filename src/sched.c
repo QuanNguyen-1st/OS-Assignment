@@ -43,12 +43,13 @@ void init_scheduler(void) {
  *  State representation   prio = 0 .. MAX_PRIO, curr_slot = 0..(MAX_PRIO - prio)
  */
 struct pcb_t * get_mlq_proc(void) {
+	struct pcb_t* proc = NULL;
 	static int prio =0;
 	static int curr_slot =0;
 	int start = prio;
 	if (curr_slot >= MAX_PRIO - prio){
 		pthread_mutex_lock(&queue_lock);
-		struct pcb_t* proc = dequeue(&mlq_ready_queue[prio]);
+		proc = dequeue(&mlq_ready_queue[prio]);
 		pthread_mutex_unlock(&queue_lock);
 		if (proc != NULL){
 			curr_slot++;
@@ -62,7 +63,7 @@ struct pcb_t * get_mlq_proc(void) {
 			prio = 0;
 		}
 		pthread_mutex_lock(&queue_lock);
-		struct pcb_t* proc = dequeue(&mlq_ready_queue[prio]);
+		proc = dequeue(&mlq_ready_queue[prio]);
 		pthread_mutex_unlock(&queue_lock);
 		if (proc != NULL){
 			curr_slot++;
