@@ -112,6 +112,13 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
 
   *alloc_addr = old_sbrk;
 
+  if (old_sbrk + size < cur_vma->vm_end) {
+    struct vm_rg_struct *rgnode = malloc(sizeof(struct vm_rg_struct));
+    rgnode->rg_start = old_sbrk + size;
+    rgnode->rg_end = cur_vma->vm_end;
+    enlist_vm_freerg_list(caller->mm, *rgnode);
+  }
+  
   return 0;
 }
 
@@ -193,16 +200,12 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 
     /* Do swap frame from MEMRAM to MEMSWP and vice versa*/
     /* Copy victim frame to swap */
-    //__swap_cp_page();
     __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
     /* Copy target frame from swap to mem */
-    //__swap_cp_page();
     __swap_cp_page(caller->active_mswp, tgtfpn, caller->mram, vicfpn);
     /* Update page table */
-    //pte_set_swap() &mm->pgd;
     pte_set_swap(&mm->pgd[vicpgn], 0, swpfpn);
     /* Update its online status of the target page */
-    //pte_set_fpn() & mm->pgd[pgn];
     pte_set_fpn(&mm->pgd[pgn], vicfpn);
 
     enlist_pgn_node(&caller->mm->fifo_pgn,pgn);
@@ -409,11 +412,11 @@ int validate_overlap_vm_area(struct pcb_t *caller, int vmaid, int vmastart, int 
   if (caller == NULL) return -1;
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
   if (cur_vma == NULL) return -1;
-  struct vm_area_struct *iter = caller->mm->mmap;
-  while (iter != NULL) {
-    if (!(iter == cur_vma || iter->vm_end <= vmastart || vmaend <= iter->vm_start))
+  struct vm_area_struct *it = caller->mm->mmap;
+  while (it != NULL) {
+    if (!(it == cur_vma || it->vm_end <= vmastart || vmaend <= it->vm_start))
       return 1;
-    iter = iter->vm_next;
+    it = it->vm_next;
   }
   return 0;
 }

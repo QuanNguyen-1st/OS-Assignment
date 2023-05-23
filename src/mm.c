@@ -135,8 +135,8 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
 
   for(pgit = 0; pgit < req_pgnum; pgit++)
   {
-    //struct framephy_struct *new_fp = malloc(sizeof(struct framephy_struct));
-    if(MEMPHY_get_freefp(caller->mram, &fpn) == 0)
+    struct framephy_struct *new_fp = malloc(sizeof(struct framephy_struct));
+    if(MEMPHY_get_freefp(caller->mram, &fpn) != 0)
    {
      int vicpgn;
       find_victim_page(caller->mm, &vicpgn);
@@ -152,10 +152,9 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       fpn = vicfpn;
     } else {  // ERROR CODE of obtaining somes but not enough frames
    } 
-   //new_fp->fpn = fpn;
-    //new_fp->fp_next = *frm_lst;
-    //*frm_lst = new_fp;
-    frm_lst[pgit]->fpn = fpn;
+    new_fp->fpn = fpn;
+    new_fp->fp_next = *frm_lst;
+    *frm_lst = new_fp;
  }
 
   return 0;
