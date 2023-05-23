@@ -18,7 +18,8 @@ int queue_empty(void) {
 	unsigned long prio;
 	for (prio = 0; prio < MAX_PRIO; prio++)
 		if(!empty(&mlq_ready_queue[prio])) 
-			return -1;
+			return 0;
+	return 1;
 #endif
 	return (empty(&ready_queue) && empty(&run_queue));
 }
@@ -47,7 +48,7 @@ struct pcb_t * get_mlq_proc(void) {
 	static int prio =0;
 	static int curr_slot =0;
 	int start = prio;
-	if (curr_slot >= MAX_PRIO - prio){
+	if (curr_slot >= MAX_PRIO - prio && queue_empty()!= 1){
 		pthread_mutex_lock(&queue_lock);
 		proc = dequeue(&mlq_ready_queue[prio]);
 		pthread_mutex_unlock(&queue_lock);
