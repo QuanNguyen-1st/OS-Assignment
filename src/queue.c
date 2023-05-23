@@ -3,6 +3,7 @@
 #include "queue.h"
 
 int empty(struct queue_t * q) {
+        if (q == NULL) return 1;
 	return (q->size == 0);
 }
 
