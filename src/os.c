@@ -14,7 +14,7 @@ static int time_slot;
 static int num_cpus;
 static int done = 0;
 
-pthread_mutex_t mem_lock;	
+pthread_mutex_t mem_lock;
 
 #ifdef MM_PAGING
 static int memramsz;
@@ -118,7 +118,6 @@ static void * ld_routine(void * args) {
 #endif
 		while (current_time() < ld_processes.start_time[i]) {
 			next_slot(timer_id);
-			
 		}
 #ifdef MM_PAGING
 		proc->mm = malloc(sizeof(struct mm_struct));
@@ -127,8 +126,13 @@ static void * ld_routine(void * args) {
 		proc->mswp = mswp;
 		proc->active_mswp = active_mswp;
 #endif
+#ifdef MLQ_SCHED
 		printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",
-			ld_processes.path[i], proc->pid, ld_processes.prio[i]);
+			   ld_processes.path[i], proc->pid, ld_processes.prio[i]);
+#else
+		printf("\tLoaded a process at %s, PID: %d PRIO: %d\n",
+			   ld_processes.path[i], proc->pid, proc->priority);
+#endif // MLQ_SCHED
 		add_proc(proc);
 		free(ld_processes.path[i]);
 		i++;
@@ -151,7 +155,6 @@ static void read_config(const char * path) {
 	ld_processes.path = (char**)malloc(sizeof(char*) * num_processes);
 	ld_processes.start_time = (unsigned long*)
 		malloc(sizeof(unsigned long) * num_processes);
-
 #ifdef MM_PAGING
 	int sit;
 #ifdef MM_FIXED_MEMSZ
@@ -160,8 +163,8 @@ static void read_config(const char * path) {
 	 * for legacy info 
          *  [time slice] [N = Number of CPU] [M = Number of Processes to be run]
          */
-       memramsz    =  0x100000;
-       memswpsz[0] = 0x1000000;
+        memramsz    =  0x100000;
+        memswpsz[0] = 0x1000000;
 	for(sit = 1; sit < PAGING_MAX_MMSWP; sit++)
 		memswpsz[sit] = 0;
 #else
@@ -173,7 +176,7 @@ static void read_config(const char * path) {
 	for(sit = 0; sit < PAGING_MAX_MMSWP; sit++)
 		fscanf(file, "%d", &(memswpsz[sit])); 
 
-    fscanf(file, "\n"); /* Final character */
+       fscanf(file, "\n"); /* Final character */
 #endif
 #endif
 
@@ -238,6 +241,7 @@ int main(int argc, char * argv[]) {
 	for(sit = 0; sit < PAGING_MAX_MMSWP; sit++)
 	       init_memphy(&mswp[sit], memswpsz[sit], rdmflag);
 
+	// Initialize the mutex
 	pthread_mutex_init(&mem_lock, NULL);
 
 	/* In Paging mode, it needs passing the system mem to each PCB through loader*/
@@ -248,7 +252,6 @@ int main(int argc, char * argv[]) {
 	mm_ld_args->mswp = (struct memphy_struct**) &mswp;
 	mm_ld_args->active_mswp = (struct memphy_struct *) &mswp[0];
 #endif
-
 
 	/* Init scheduler */
 	init_scheduler();
@@ -276,6 +279,5 @@ int main(int argc, char * argv[]) {
 	return 0;
 
 }
-
 
 
