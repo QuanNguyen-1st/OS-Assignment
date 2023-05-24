@@ -27,15 +27,14 @@ all: os
 
 # Just compile memory management modules
 mem: $(MEM_OBJ)
-	$(MAKE) $(LFLAGS) $(MEM_OBJ) -o mem $(LIB) -w
-
+	$(MAKE) $(LFLAGS) $(MEM_OBJ) -o mem $(LIB)
 # Just compile scheduler
 sched: $(SCHED_OBJ)
-	$(MAKE) $(LFLAGS) $(MEM_OBJ) -o sched $(LIB) -w
+	$(MAKE) $(LFLAGS) $(MEM_OBJ) -o sched $(LIB)
 
 # Compile the whole OS simulation
 os: $(OS_OBJ)
-	$(MAKE) $(LFLAGS) $(OS_OBJ) -o os $(LIB) -w
+	$(MAKE) $(LFLAGS) $(OS_OBJ) -o os $(LIB)
 
 $(OBJ)/%.o: %.c ${HEADER} $(OBJ)
 	$(MAKE) $(CFLAGS) $< -o $@
