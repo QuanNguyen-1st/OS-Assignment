@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef MM_PAGING	
 /*
  *  MEMPHY_mv_csr - move MEMPHY cursor
  *  @mp: memphy struct

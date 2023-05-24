@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef MM_PAGING	
 /* 
  * init_pte - Initialize PTE entry
  */
@@ -88,8 +89,8 @@ int vmap_page_range(struct pcb_t *caller, // process call
   //uint32_t * pte = malloc(sizeof(uint32_t));
   struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
   //int  fpn;
-  int pgit = 0;
-  int pgn = PAGING_PGN(addr);
+  int pgit;
+  int pgn;
 
   ret_rg->rg_end = ret_rg->rg_start = addr; // at least the very first space is usable
 
@@ -100,7 +101,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      in page table caller->mm->pgd[]
    */
   fpit = frames;
-  for (pgit; pgit < pgnum; pgit++){
+  for (pgit = 0; pgit < pgnum; pgit++){
     pgn = PAGING_PGN(addr + pgit*PAGING_PAGESZ);
     uint32_t *pte = &caller->mm->pgd[pgn];
     pte_set_fpn(pte, fpit->fpn);
@@ -236,9 +237,12 @@ int init_mm(struct mm_struct *mm, struct pcb_t *caller)
   struct vm_area_struct * vma = malloc(sizeof(struct vm_area_struct));
 
   mm->pgd = malloc(PAGING_MAX_PGN*sizeof(uint32_t));
+  for (int i = 0; i < PAGING_MAX_PGN; i++){	
+    mm->pgd[i] = 0;	
+  }
 
   /* By default the owner comes with at least one vma */
-  vma->vm_id = 1;
+  vma->vm_id = 0;
   vma->vm_start = 0;
   vma->vm_end = vma->vm_start;
   vma->sbrk = vma->vm_start;

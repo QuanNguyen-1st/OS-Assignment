@@ -8,7 +8,10 @@
 #include "mm.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
+
+#ifdef MM_PAGING
 /*enlist_vm_freerg_list - add new rg to freerg_list
  *@mm: memory region
  *@rg_elmt: new region
@@ -121,6 +124,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
     enlist_vm_freerg_list(caller->mm, *rgnode);
   }
   
+  pthread_mutex_unlock(&mem_lock);	
   return 0;
 }
 
@@ -137,9 +141,10 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   pthread_mutex_lock(&mem_lock);	
   struct vm_rg_struct rgnode;
 
-  if(rgid < 0 || rgid > PAGING_MAX_SYMTBL_SZ)
+  if(rgid < 0 || rgid > PAGING_MAX_SYMTBL_SZ){
+    pthread_mutex_unlock(&mem_lock);	
     return -1;
-
+  }
   /* TODO: Manage the collect freed region to freerg_list */
   rgnode.rg_start = caller->mm->symrgtbl[rgid].rg_start;
   rgnode.rg_end = caller->mm->symrgtbl[rgid].rg_end;
@@ -186,8 +191,7 @@ int pgfree_data(struct pcb_t *proc, uint32_t reg_index)
 int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 {
   uint32_t pte = mm->pgd[pgn];
- 
-  uint32_t pte = mm->pgd[pgn];	
+  	
   if (!PAGING_PAGE_PRESENT(pte)){ // A frame has not been assigned for this page	
     int new_fpn;	
     if (MEMPHY_get_freefp(caller->mram, &new_fpn) < 0)	{ // RAM has no free frame	
