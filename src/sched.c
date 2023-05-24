@@ -47,7 +47,6 @@ struct pcb_t * get_mlq_proc(void) {
 	struct pcb_t* proc = NULL;
 	static int prio =0;
 	static int curr_slot =0;
-	int start = prio;
 	if (queue_empty() == 1) 
 		return NULL;
 	if (curr_slot >= MAX_PRIO - prio){
@@ -61,7 +60,7 @@ struct pcb_t * get_mlq_proc(void) {
 	}
 	curr_slot =0;
 	prio++;
-	while (prio != start  && queue_empty()!= 1){
+	while (queue_empty()!= 1){
 		if (prio >= MAX_PRIO){
 			prio = 0;
 		}
