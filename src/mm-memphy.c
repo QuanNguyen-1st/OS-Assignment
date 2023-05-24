@@ -165,7 +165,7 @@ int MEMPHY_dump(struct memphy_struct *mp)
    if (mp == NULL) return -1;
    for (int i = 0; i < mp->maxsz; i++)
       if (mp->storage[i] != 0){
-         if (!mp->rdmflg) MEMPHY_mv_csr(mp, i);  
+         //if (!mp->rdmflg) MEMPHY_mv_csr(mp, i);  
          printf(mp->storage[i]);
       }
    return 0;
