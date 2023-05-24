@@ -150,8 +150,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       pte_set_swap(&caller->mm->pgd[vicpgn], 0, swpfpn);
       // Return this victim frame to the free frame list
       fpn = vicfpn;
-    } else {  // ERROR CODE of obtaining somes but not enough frames
-   } 
+    }
     new_fp->fpn = fpn;
     new_fp->fp_next = *frm_lst;
     *frm_lst = new_fp;
