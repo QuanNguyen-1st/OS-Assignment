@@ -3,11 +3,11 @@
 
 #include "common.h"
 
-#ifndef MLQ_SCHED
-#define MLQ_SCHED
-#endif
+// #ifndef MLQ_SCHED
+// #define MLQ_SCHED
+// #endif
 
-#define MAX_PRIO 139
+#define MAX_PRIO 140
 
 int queue_empty(void);
 
@@ -24,5 +24,4 @@ void put_proc(struct pcb_t * proc);
 void add_proc(struct pcb_t * proc);
 
 #endif
-
 
