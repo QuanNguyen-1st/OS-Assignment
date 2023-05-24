@@ -116,6 +116,7 @@ static void * ld_routine(void * args) {
 #endif
 		while (current_time() < ld_processes.start_time[i]) {
 			next_slot(timer_id);
+			
 		}
 #ifdef MM_PAGING
 		proc->mm = malloc(sizeof(struct mm_struct));
