@@ -166,7 +166,7 @@ int MEMPHY_dump(struct memphy_struct *mp)
    for (int i = 0; i < mp->maxsz; i++)
       if (mp->storage[i] != 0){
          //if (!mp->rdmflg) MEMPHY_mv_csr(mp, i);  
-         printf(mp->storage[i]);
+         printf("At index %d: %d", i,  mp->storage[i]);
       }
    return 0;
 }
