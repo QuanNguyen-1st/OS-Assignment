@@ -33,6 +33,9 @@ struct pcb_t * dequeue(struct queue_t * q) {
 		}
 		q->proc[q->size - 1] = NULL;
 		q->size -= 1;
+		if (min_proc -> prio!= NULL){
+			min_proc -> prio = min_proc->priority;
+		}
 		return min_proc;
 	}
 	return NULL;
