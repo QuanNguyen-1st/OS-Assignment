@@ -1,0 +1,40 @@
+At runtime:
+Time slot [0]: 
+    Proc 1 with prio 136 loaded
+Time slot [1]:
+    Proc 1 with prio 136 dispatch: slot for prio 136: 2
+    Proc 2 with prio 136 loaded
+Time slot [2]:
+    Proc 3 with prio 136 loaded
+Time slot [3]:
+    Proc 1 with prio 1 put in queue
+    Proc 2 with prio 136 dispatch: slot for prio 136: 1
+    Proc 4 with prio 137 loaded
+Time slot [4]:
+Time slot [5]:
+    Proc 2 with prio 1 put in queue
+    Proc 3 with prio 136 dispatch: slot for prio 136: 0
+Time slot [6]:
+Time slot [7]:
+    Proc 3 with prio 2 put in queue
+    Proc 4 with prio 137 dispatch: slot for prio 137: 1
+Time slot [8]:
+Time slot [9]:
+    Proc 4 with prio 0 put in queue
+    Proc 4 with prio 0 dispatch: slot for prio 0: 138
+Time slot [10]:
+Time slot [11]:
+    Proc 4 with prio 0 finished
+    Proc 1 with prio 1 dispatch
+Time slot [12]:
+Time slot [13]:
+    Proc 1 with prio 1 finished
+    Proc 2 with prio 1 dispatch
+Time slot [14]:
+Time slot [15]:
+    Proc 2 with prio 1 finished
+    Proc 3 with prio 2 dispatch
+Time slot [16]:
+Time slot [17]:
+    Proc 3 with prio 2 finished
+    Done

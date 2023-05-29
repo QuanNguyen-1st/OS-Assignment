@@ -49,7 +49,7 @@ struct pcb_t * get_mlq_proc(void) {
 	static int curr_slot =0;
 	if (queue_empty() == 1) 
 		return NULL;
-	if (curr_slot <= MAX_PRIO - prio){
+	if (curr_slot < MAX_PRIO - prio){
 		pthread_mutex_lock(&queue_lock);
 		proc = dequeue(&mlq_ready_queue[prio]);
 		pthread_mutex_unlock(&queue_lock);
@@ -79,18 +79,19 @@ struct pcb_t * get_mlq_proc(void) {
 
 void put_mlq_proc(struct pcb_t * proc) {
 	pthread_mutex_lock(&queue_lock);
-	enqueue(&mlq_ready_queue[proc->prio], proc);
+	enqueue(&mlq_ready_queue[proc->priority], proc);
 	pthread_mutex_unlock(&queue_lock);
 }
 
 void add_mlq_proc(struct pcb_t * proc) {
 	pthread_mutex_lock(&queue_lock);
-	enqueue(&mlq_ready_queue[proc->priority], proc);
+	enqueue(&mlq_ready_queue[proc->prio], proc);
 	pthread_mutex_unlock(&queue_lock);	
 }
 
 struct pcb_t * get_proc(void) {
-	return get_mlq_proc();
+	struct pcb_t* result = get_mlq_proc();
+	return result;
 }
 
 void put_proc(struct pcb_t * proc) {
